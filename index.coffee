@@ -1,4 +1,40 @@
+# Trying out Highland.js is the main reason for writing this.
+
 _ = require 'highland'
+
+
+# Immutable brainfuck virtual machine.
+
+class BrainfuckVM
+  constructor: (@mem, @mp, @ip) ->
+    # @mem: holds the program memory
+    # @mp: memory pointer
+    # @ip: instruction pointer
+
+  @initial: -> new BrainfuckVM([], 0, 0)
+
+  getMem: -> @mem[@mp]
+
+  incMem: ->
+    clone = @mem.slice(0)
+    clone[@mp] = (clone[@mp] or 0) + 1
+    new BrainfuckVM(clone, @mp, @ip)
+
+  decMem: ->
+    clone = @mem.slice(0)
+    clone[@mp] = (clone[@mp] or 0) - 1
+    new BrainfuckVM(clone, @mp, @ip)
+
+  setIP: (ip) -> new BrainfuckVM(@mem, @mp, ip)
+
+  incIP: -> new BrainfuckVM(@mem, @mp, @ip++)
+
+  incMP: -> new BrainfuckVM(@mem, @mp++, @ip)
+
+  decMP: -> new BrainfuckVM(@mem, @mp--, @ip)
+
+
+# Subset of brainfuck tokens. Left out: IO operators.
 
 ADD = '+'
 SUB = '-'
@@ -8,66 +44,70 @@ LT = '<'
 GT = '>'
 OPS = /[\+\-\[\]<>]/
 
+
+# Token-to-instruction map e.g. '+' increments the memory register at the
+# current memory pointer than increments the instruction pointer.
+
 INSTRUCTION_MAP =
-  "#{ADD}": (vm) -> vm.incMem().incIP()
-  "#{SUB}": (vm) -> vm.decMem().incIP()
+  '+': (vm) -> vm.incMem().incIP()
+  '-': (vm) -> vm.decMem().incIP()
 
-  "#{GT}": (vm) -> vm.incMP().incIP()
-  "#{LT}": (vm) -> vm.decMP().incIP()
+  '>': (vm) -> vm.incMP().incIP()
+  '<': (vm) -> vm.decMP().incIP()
 
-  "#{LBRACK}": (jump) -> (vm) -> if vm.getMem() then vm.incIP() else vm.setIP(jump+1)
-  "#{LBRACK}": (jump) -> (vm) -> vm.setIP(jump)
+  '[': (jump) -> (vm) -> if vm.getMem() then vm.incIP() else vm.setIP(jump+1)
+  ']': (jump) -> (vm) -> vm.setIP(jump)
 
-class VirtualMachine
-  constructor: (@mem, @mp, @ip) ->
 
-  @initial: -> new VirtualMachine([], 0, 0)
-
-  getMem: -> @mem[@mp]
-
-  incMem: ->
-    clone = @mem.slice(0)
-    clone[@mp] = (clone[@mp] or 0) + 1
-    new VirtualMachine(clone, @mp, @ip)
-
-  decMem: ->
-    clone = @mem.slice(0)
-    clone[@mp] = (clone[@mp] or 0) - 1
-    new VirtualMachine(clone, @mp, @ip)
-
-  setIP: (ip) -> new VirtualMachine(@mem, @mp, ip)
-
-  incIP: -> new VirtualMachine(@mem, @mp, @ip++)
-
-  incMP: -> new VirtualMachine(@mem, @mp++, @ip)
-
-  decMP: -> new VirtualMachine(@mem, @mp--, @ip)
+# Splits the source strings into single characters.
 
 splitChars = (sourceString) -> sourceString.split ''
 
+
+# Filters-out comments and whitespace.
+
 validOperators = (char) -> OPS.test char
+
+
+# Loops through characters and determines the jump targets for left and right
+# brackets. Returns a syntax node {char, jump}.
 
 syntaxNodes = (chars) ->
   jumpStack = []
-  operators = []
+  nodes = []
   for char, index in chars
     do ->
       if char is LBRACK
         jumpStack.push index
       if char is RBRACK
         jump = jumpStack.pop()
-        operators[jump].jump = index
-      operators.push {char, jump}
-  operators
+        nodes[jump].jump = index
+      nodes.push {char, jump}
+  nodes
     
-instructions = (operator) ->
-  instruction = INSTRUCTION_MAP[operator.char]
-  instruction = instruction(operator.jump) if operator.jump
+
+# Given a syntaxNode, return the corresponding instruction. Jump instructions
+# are partially applied with the jump target.
+
+instructions = (syntaxNode) ->
+  instruction = INSTRUCTION_MAP[syntaxNode.char]
+  instruction = instruction(syntaxNode.jump) if syntaxNode.jump isnt undefined
   instruction
+
+
+# Apply an instruction to a virtual machine. Returns a virtual machine.
 
 execute = (vm, instruction) -> instruction(vm)
 
+
+# Prints out a vm.
+
 result = (err, vm) -> console.log vm
+
+
+# mem[0] = 3
+# mem[1] = 5
+# mem[0] = mem[0] + mem[1]
 
 source = ["
   +++     add 3 to reg0
@@ -82,11 +122,15 @@ source = ["
   <       goto reg0
 "]
 
+
+# Stream parse and execute the source document.
+
 _ source
   .flatMap splitChars
   .filter validOperators
   .collect()
   .flatMap syntaxNodes
   .map instructions
-  .reduce VirtualMachine.initial(), execute
+  .reduce BrainfuckVM.initial(), execute
   .pull result
+
