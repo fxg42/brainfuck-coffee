@@ -38,7 +38,6 @@ OPS = /[\+\-\[\]<>]/
 INSTRUCTION_MAP = {}
 
 INSTRUCTION_MAP[ADD] = (vm) -> vm.incMem(); vm.incIP()
-
 INSTRUCTION_MAP[SUB] = (vm) -> vm.decMem(); vm.incIP()
 
 INSTRUCTION_MAP[GT] = (vm) -> vm.incMP(); vm.incIP()
