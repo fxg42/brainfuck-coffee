@@ -142,7 +142,7 @@ jsGenerator = (tokenStream) ->
 
 # Stream, parse, interpret the source code and generate js:
 #
-#     $ coffee index.coffee helloworld.b
+#     $ coffee bf.coffee -o out.js -i src/helloworld.b
 
 source = _ fs.createReadStream(argv.i, {encoding:'utf8'})
 
