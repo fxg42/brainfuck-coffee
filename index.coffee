@@ -50,15 +50,16 @@ OPS = /[\+\-\[\]<>]/
 # Token-to-instruction map e.g. '+' increments the memory register at the
 # current memory pointer than increments the instruction pointer.
 
-INSTRUCTION_MAP =
-  '+': (vm) -> vm.incMem().incIP()
-  '-': (vm) -> vm.decMem().incIP()
+INSTRUCTION_MAP = {}
 
-  '>': (vm) -> vm.incMP().incIP()
-  '<': (vm) -> vm.decMP().incIP()
+INSTRUCTION_MAP[ADD] = (vm) -> vm.incMem().incIP()
+INSTRUCTION_MAP[SUB] = (vm) -> vm.decMem().incIP()
 
-  '[': (jump) -> (vm) -> if vm.getMem() then vm.incIP() else vm.setIP(jump+1)
-  ']': (jump) -> (vm) -> vm.setIP(jump)
+INSTRUCTION_MAP[GT] = (vm) -> vm.incMP().incIP()
+INSTRUCTION_MAP[LT] = (vm) -> vm.decMP().incIP()
+
+INSTRUCTION_MAP[LBRACK] = (jump) -> (vm) -> if vm.getMem() then vm.incIP() else vm.setIP(jump+1)
+INSTRUCTION_MAP[RBRACK] = (jump) -> (vm) -> vm.setIP(jump)
 
 
 # Splits the source strings into single characters.
