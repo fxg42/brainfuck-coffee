@@ -6,35 +6,15 @@ _ = require 'highland'
 # Immutable brainfuck virtual machine.
 
 class BrainfuckVM
-  constructor: (@mem, @mp, @ip) ->
-    # @mem: holds the program memory
-    # @mp: memory pointer
-    # @ip: instruction pointer
-
-  @initial: -> new BrainfuckVM([], 0, 0)
-
+  constructor: (@mem = [], @mp = 0, @ip = 0) ->
+  execute: (instructions) -> instructions[@ip](@) while instructions[@ip]
   getMem: -> @mem[@mp]
-
-  incMem: ->
-    clone = @cloneMem()
-    clone[@mp] = (clone[@mp] or 0) + 1
-    new BrainfuckVM(clone, @mp, @ip)
-
-  decMem: ->
-    clone = @cloneMem()
-    clone[@mp] = (clone[@mp] or 0) - 1
-    new BrainfuckVM(clone, @mp, @ip)
-
-  setIP: (ip) -> new BrainfuckVM(@cloneMem(), @mp, ip)
-
-  incIP: -> new BrainfuckVM(@cloneMem(), @mp, @ip++)
-
-  incMP: -> new BrainfuckVM(@cloneMem(), @mp++, @ip)
-
-  decMP: -> new BrainfuckVM(@cloneMem(), @mp--, @ip)
-
-  cloneMem: -> @mem.slice(0)
-
+  incMem: -> @mem[@mp] = (@mem[@mp] or 0) + 1
+  decMem: -> @mem[@mp] = (@mem[@mp] or 0) - 1
+  setIP: (ip) -> @ip = ip
+  incIP: -> @ip++
+  incMP: -> @mp++
+  decMP: -> @mp--
 
 # Subset of brainfuck tokens. Left out: IO operators.
 
@@ -52,11 +32,12 @@ OPS = /[\+\-\[\]<>]/
 
 INSTRUCTION_MAP = {}
 
-INSTRUCTION_MAP[ADD] = (vm) -> vm.incMem().incIP()
-INSTRUCTION_MAP[SUB] = (vm) -> vm.decMem().incIP()
+INSTRUCTION_MAP[ADD] = (vm) -> vm.incMem(); vm.incIP()
 
-INSTRUCTION_MAP[GT] = (vm) -> vm.incMP().incIP()
-INSTRUCTION_MAP[LT] = (vm) -> vm.decMP().incIP()
+INSTRUCTION_MAP[SUB] = (vm) -> vm.decMem(); vm.incIP()
+
+INSTRUCTION_MAP[GT] = (vm) -> vm.incMP(); vm.incIP()
+INSTRUCTION_MAP[LT] = (vm) -> vm.decMP(); vm.incIP()
 
 INSTRUCTION_MAP[LBRACK] = (jump) -> (vm) -> if vm.getMem() then vm.incIP() else vm.setIP(jump+1)
 INSTRUCTION_MAP[RBRACK] = (jump) -> (vm) -> vm.setIP(jump)
@@ -100,7 +81,10 @@ instructions = (syntaxNode) ->
 
 # Apply an instruction to a virtual machine. Returns a virtual machine.
 
-execute = (vm, instruction) -> instruction(vm)
+execute = (instructions) ->
+  vm = new BrainfuckVM()
+  vm.execute(instructions)
+  console.log vm
 
 
 # Group transformations together
@@ -113,7 +97,7 @@ parser = (s) ->
 
 interpreter = (s) ->
   s.map instructions
-   .reduce BrainfuckVM.initial(), execute
+   .toArray execute
 
 # Prints out a vm.
 
@@ -139,4 +123,3 @@ source = ["
 _ source
   .through parser
   .through interpreter
-  .pull result
