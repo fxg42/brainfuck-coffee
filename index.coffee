@@ -103,6 +103,18 @@ instructions = (syntaxNode) ->
 execute = (vm, instruction) -> instruction(vm)
 
 
+# Group transformations together
+
+parser = (s) ->
+  s.flatMap splitChars
+   .filter validOperators
+   .collect()
+   .flatMap syntaxNodes
+
+interpreter = (s) ->
+  s.map instructions
+   .reduce BrainfuckVM.initial(), execute
+
 # Prints out a vm.
 
 result = (err, vm) -> console.log vm
@@ -122,15 +134,9 @@ source = ["
   ]       end
 "]
 
-
 # Stream, parse and execute the source code.
 
 _ source
-  .flatMap splitChars
-  .filter validOperators
-  .collect()
-  .flatMap syntaxNodes
-  .map instructions
-  .reduce BrainfuckVM.initial(), execute
+  .through parser
+  .through interpreter
   .pull result
-
