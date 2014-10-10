@@ -16,22 +16,24 @@ class BrainfuckVM
   getMem: -> @mem[@mp]
 
   incMem: ->
-    clone = @mem.slice(0)
+    clone = @cloneMem()
     clone[@mp] = (clone[@mp] or 0) + 1
     new BrainfuckVM(clone, @mp, @ip)
 
   decMem: ->
-    clone = @mem.slice(0)
+    clone = @cloneMem()
     clone[@mp] = (clone[@mp] or 0) - 1
     new BrainfuckVM(clone, @mp, @ip)
 
-  setIP: (ip) -> new BrainfuckVM(@mem, @mp, ip)
+  setIP: (ip) -> new BrainfuckVM(@cloneMem(), @mp, ip)
 
-  incIP: -> new BrainfuckVM(@mem, @mp, @ip++)
+  incIP: -> new BrainfuckVM(@cloneMem(), @mp, @ip++)
 
-  incMP: -> new BrainfuckVM(@mem, @mp++, @ip)
+  incMP: -> new BrainfuckVM(@cloneMem(), @mp++, @ip)
 
-  decMP: -> new BrainfuckVM(@mem, @mp--, @ip)
+  decMP: -> new BrainfuckVM(@cloneMem(), @mp--, @ip)
+
+  cloneMem: -> @mem.slice(0)
 
 
 # Subset of brainfuck tokens. Left out: IO operators.
