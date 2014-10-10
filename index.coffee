@@ -110,14 +110,14 @@ result = (err, vm) -> console.log vm
 # Small brainsfuck program that initializes 2 registers and sums them: "+++>+++++[-<+>]"
 
 source = ["
-  +++     add 3 to reg0
-  >       go to reg1
-  +++++   add 5 to reg1
-  [       while reg1 isnt 0
-    -       dec reg1
-    <       goto reg0
-    +       inc reg0
-    >       goto reg1
+  +++     add 3 to mem0
+  >       go to mem1
+  +++++   add 5 to mem1
+  [       while mem1 isnt 0
+    -       dec mem1
+    <       goto mem0
+    +       inc mem0
+    >       goto mem1
   ]       end
 "]
 
