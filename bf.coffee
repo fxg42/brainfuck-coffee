@@ -59,8 +59,8 @@ INSTRUCTION_MAP[RBRACK] = (jump) -> (vm) -> vm.setIP(jump)
 
 SNIPPET_MAP = {}
 SNIPPET_MAP[DOT] = "process.stdout.write(String.fromCharCode(mem[mp]));"
-SNIPPET_MAP[ADD] = "mem[mp] = (mem[mp] || 0) + 1;"
-SNIPPET_MAP[SUB] = "mem[mp] = (mem[mp] || 0) - 1;"
+SNIPPET_MAP[ADD] = "mem[mp] = (mem[mp] || 0) + 1;"
+SNIPPET_MAP[SUB] = "mem[mp] = (mem[mp] || 0) - 1;"
 SNIPPET_MAP[GT] = "mp++;"
 SNIPPET_MAP[LT] = "mp--;"
 SNIPPET_MAP[LBRACK] = "while(mem[mp]){"
