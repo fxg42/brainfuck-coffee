@@ -142,9 +142,10 @@ jsGenerator = (tokenStream) ->
 
 # Stream, parse, interpret the source code and generate js:
 #
-#     $ coffee bf.coffee -o out.js -i src/helloworld.b
+#     $ coffee bf.coffee -o out.js src/helloworld.b
 
-source = _ fs.createReadStream(argv.i, {encoding:'utf8'})
+source = _ fs.createReadStream(argv._[0], {encoding:'utf8'})
+destination = if argv.o then fs.createWriteStream(argv.o) else process.stdout
 
 tokenStream = source.through parser
 
@@ -156,4 +157,4 @@ tokenStream
 tokenStream
   .fork()
   .through jsGenerator
-  .pipe fs.createWriteStream argv.o
+  .pipe destination
