@@ -1,7 +1,11 @@
+# #!/usr/bin/env coffee
+
 # Trying out Highland.js is the main reason for writing this.
 
-_ = require 'highland'
-{js_beautify} = require('js-beautify')
+_             = require 'highland'
+fs            = require 'fs'
+{argv}        = require 'yargs'
+{js_beautify} = require 'js-beautify'
 
 
 # Brainfuck virtual machine.
@@ -39,7 +43,7 @@ OPS = /[\.\+\-\[\]<>]/
 
 INSTRUCTION_MAP = {}
 
-INSTRUCTION_MAP[DOT] = (vm) -> console.log(String.fromCharCode(vm.getMem())); vm.incIP()
+INSTRUCTION_MAP[DOT] = (vm) -> process.stdout.write(String.fromCharCode(vm.getMem())); vm.incIP()
 
 INSTRUCTION_MAP[ADD] = (vm) -> vm.incMem(); vm.incIP()
 INSTRUCTION_MAP[SUB] = (vm) -> vm.decMem(); vm.incIP()
@@ -54,7 +58,7 @@ INSTRUCTION_MAP[RBRACK] = (jump) -> (vm) -> vm.setIP(jump)
 # Token to js-snippet map.
 
 SNIPPET_MAP = {}
-SNIPPET_MAP[DOT] = "console.log(String.fromCharCode(mem[mp]));"
+SNIPPET_MAP[DOT] = "process.stdout.write(String.fromCharCode(mem[mp]));"
 SNIPPET_MAP[ADD] = "mem[mp] = (mem[mp] || 0) + 1;"
 SNIPPET_MAP[SUB] = "mem[mp] = (mem[mp] || 0) - 1;"
 SNIPPET_MAP[GT] = "mp++;"
@@ -136,34 +140,20 @@ jsGenerator = (tokenStream) ->
     .reduce "var mem=[], mp=0;", generateJS
     .map js_beautify
 
-# Small brainsfuck program that initializes 2 registers and sums them: "+++>+++++[-<+>]"
+# Stream, parse, interpret the source code and generate js:
+#
+#     $ coffee index.coffee helloworld.b
 
-add35 = ["
-  +++     add 3 to mem0
-  >       go to mem1
-  +++++   add 5 to mem1
-  [       while mem1 isnt 0
-    -       dec mem1
-    <       goto mem0
-    +       inc mem0
-    >       goto mem1
-  ]       end
-  <       goto mem0
-"]
+source = _ fs.createReadStream(argv.i, {encoding:'utf8'})
 
-helloWorld = ["++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++..+++.>>.<-.<.+++.------.--------.>>+.>++."]
+tokenStream = source.through parser
 
-# Stream, parse and execute the source code.
+tokenStream
+  .fork()
+  .through interpreter
+  .apply _.log
 
-source = add35
-
-tokenStream = _(source).through parser
-
-interpreterTokens = tokenStream.fork()
-generatorTokens = tokenStream.fork()
-
-interpreterTokens.through(interpreter).apply(_.log)
-generatorTokens.through(jsGenerator).apply(_.log)
-
-interpreterTokens.resume()
-generatorTokens.resume()
+tokenStream
+  .fork()
+  .through jsGenerator
+  .pipe fs.createWriteStream argv.o
