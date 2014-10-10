@@ -1,6 +1,7 @@
 # Trying out Highland.js is the main reason for writing this.
 
 _ = require 'highland'
+{js_beautify} = require('js-beautify')
 
 
 # Brainfuck virtual machine.
@@ -133,6 +134,7 @@ jsGenerator = (tokenStream) ->
   tokenStream
     .map snippets
     .reduce "var mem=[], mp=0;", generateJS
+    .map js_beautify
 
 # Small brainsfuck program that initializes 2 registers and sums them: "+++>+++++[-<+>]"
 
@@ -155,8 +157,13 @@ helloWorld = ["++++++++[>++++[>++>+++>+++>+<<<<-]>+>+>->>+[<]<-]>>.>---.+++++++.
 
 source = add35
 
-_ source
-  .through parser
-  # .through interpreter
-  .through jsGenerator
-  .apply _.log
+tokenStream = _(source).through parser
+
+interpreterTokens = tokenStream.fork()
+generatorTokens = tokenStream.fork()
+
+interpreterTokens.through(interpreter).apply(_.log)
+generatorTokens.through(jsGenerator).apply(_.log)
+
+interpreterTokens.resume()
+generatorTokens.resume()
