@@ -105,9 +105,7 @@ execute = (vm, instruction) -> instruction(vm)
 result = (err, vm) -> console.log vm
 
 
-# mem[0] = 3
-# mem[1] = 5
-# mem[0] = mem[0] + mem[1]
+# Small brainsfuck program that initializes 2 registers and sums them: "+++>+++++[-<+>]"
 
 source = ["
   +++     add 3 to reg0
@@ -119,11 +117,10 @@ source = ["
     +       inc reg0
     >       goto reg1
   ]       end
-  <       goto reg0
 "]
 
 
-# Stream parse and execute the source document.
+# Stream, parse and execute the source code.
 
 _ source
   .flatMap splitChars
