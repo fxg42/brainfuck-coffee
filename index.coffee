@@ -94,16 +94,18 @@ execute = (instructions) ->
 
 # Group transformations together
 
-parser = (s) ->
-  s.flatMap splitChars
-   .filter validOperators
-   .collect()
-   .flatMap syntaxNodes
+parser = (sourceStream) ->
+  sourceStream
+    .flatMap splitChars
+    .filter validOperators
+    .collect()
+    .flatMap syntaxNodes
 
-interpreter = (s) ->
-  s.map instructions
-   .collect()
-   .map execute
+interpreter = (tokenStream) ->
+  tokenStream
+    .map instructions
+    .collect()
+    .map execute
 
 # Small brainsfuck program that initializes 2 registers and sums them: "+++>+++++[-<+>]"
 
