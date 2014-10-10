@@ -3,16 +3,21 @@
 _ = require 'highland'
 
 
-# Immutable brainfuck virtual machine.
+# Brainfuck virtual machine.
 
 class BrainfuckVM
   constructor: (@mem = [], @mp = 0, @ip = 0) ->
-  execute: (instructions) -> instructions[@ip](@) while instructions[@ip]
+
+  execute: (instructions) ->
+    instructions[@ip](@) while instructions[@ip]
+
   getMem: -> @mem[@mp]
   incMem: -> @mem[@mp] = (@mem[@mp] or 0) + 1
   decMem: -> @mem[@mp] = (@mem[@mp] or 0) - 1
+
   setIP: (ip) -> @ip = ip
   incIP: -> @ip++
+
   incMP: -> @mp++
   decMP: -> @mp--
 
@@ -84,7 +89,7 @@ instructions = (syntaxNode) ->
 execute = (instructions) ->
   vm = new BrainfuckVM()
   vm.execute(instructions)
-  console.log vm
+  vm
 
 
 # Group transformations together
@@ -97,12 +102,8 @@ parser = (s) ->
 
 interpreter = (s) ->
   s.map instructions
-   .toArray execute
-
-# Prints out a vm.
-
-result = (err, vm) -> console.log vm
-
+   .collect()
+   .map execute
 
 # Small brainsfuck program that initializes 2 registers and sums them: "+++>+++++[-<+>]"
 
@@ -123,3 +124,4 @@ source = ["
 _ source
   .through parser
   .through interpreter
+  .apply _.log
