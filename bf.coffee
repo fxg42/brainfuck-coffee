@@ -2,10 +2,10 @@
 
 # Trying out Highland.js is the main reason for writing this.
 
-_             = require 'highland'
-fs            = require 'fs'
-{argv}        = require 'yargs'
-{js_beautify} = require 'js-beautify'
+_ = require 'highland'
+fs = require 'fs'
+uglifyjs = require 'uglify-js'
+{argv} = require 'yargs'
 
 
 # Brainfuck virtual machine.
@@ -118,6 +118,9 @@ execute = (instructions) ->
   vm.execute(instructions)
   vm
 
+# Minify the generated js source code.
+
+uglify = (js) -> uglifyjs.minify(js, {fromString:yes}).code
 
 # Group transformations together
 
@@ -138,7 +141,7 @@ jsGenerator = (tokenStream) ->
   tokenStream
     .map snippets
     .reduce "var mem=[], mp=0;", generateJS
-    .map js_beautify
+    .map uglify
 
 # Stream, parse, interpret the source code and generate js:
 #
